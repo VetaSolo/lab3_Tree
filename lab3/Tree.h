@@ -30,6 +30,135 @@ public:
         this->tree = tree;
     }
 };
+class MyIterator
+{
+public:
+    virtual ~MyIterator() {};
+    virtual bool has_next() = 0;
+    virtual int next() = 0;
+};
+class MyQueue
+{
+public:
+    MyQueue()
+    {
+        size = 0;
+        head = nullptr;
+        last = nullptr;
+    }
+    ~MyQueue()
+    {
+        clear();
+    }
+    void clear()
+    {
+        while (size) pop_front();
+    }
+    void save_queue()
+    {
+        size = 0;
+    }
+    int get_elem(size_t index)//get element
+    {
+        if (size == index + 1)
+        {
+            return last->number;
+        }
+        else if (size > index + 1)
+        {
+            Node* current = head;
+            for (size_t i = 0; i < index; i++, current = current->next); // moves the current list to index inclusive
+            return current->number; // returns index number
+        }
+        else
+        {
+            throw out_of_range("index is entered incorrectly"); // error message
+        }
+    }
+    NodeTree* get_elem_tree(size_t index);
+    void pop_front();
+    bool contains(int number)
+    {
+        Node* current = head;
+        while (current)
+        {
+            if (current->number == number)
+                return true;
+            current = current->next;
+        }
+        return false;
+    }
+    size_t get_size()
+    {
+        return size;
+    }
+    void push_back(int newnumber)
+    {
+        if (!head)
+        {
+            head = new Node(newnumber); // creates a list with newnumber
+            last = head;
+        }
+        else
+        {
+            last->next = new Node(newnumber); // adds newnumber to the end of the list
+            last = last->next;
+        }
+        size++;
+    }
+    void push_back(NodeTree* tree)
+    {
+        if (!head && tree)
+        {
+            head = new Node(0);
+            last = head;
+            head->tree = tree; // creates a list with tree
+            size++;
+        }
+        else if (tree)
+        {
+            last->next = new Node(0);
+            last = last->next;
+            last->tree = tree;  // creates a list with tree
+            size++;
+        }
+        else throw out_of_range("the tree does not exist!");
+    }
+    MyIterator* create_iterator()
+    {
+        return new MyListIterator(head);
+    }
+    
+    class MyListIterator : public MyIterator
+    {
+    public:
+        MyListIterator(Node* start)
+        {
+            current = start;
+        }
+        bool has_next() override
+        {
+            return current;
+        }
+        int next() override
+        {
+            if (current)
+            {
+                int temp = current->number;
+                current = current->next;
+                return temp;
+            }
+            return 0;
+        }
+    private:
+        Node* current;
+    };
+private:
+    Node* head = nullptr;
+    Node* last = nullptr;
+    size_t size;
+};
+
 class BST
 {
 public:
@@ -189,6 +318,74 @@ public:
                 count--;
             }
         }
+    }
+
+    MyIterator* create_dft_iterator()
+    {
+        if (head)
+        {
+            MyQueue list;
+            NodeTree* current = head;
+            while (count > list.get_size())
+            {
+                while (current->left)
+                {
+                    list.push_back(current->number);
+                    current = current->left;
+                }
+                if (current->right)
+                {
+                    list.push_back(current->number);
+                    current = current->right;
+                    continue;
+                }
+                else list.push_back(current->number);
+                while (current->root && count > list.get_size())
+                {
+                    current = current->root; // go to the root
+                    if (current->right)
+                    {
+                        if (!list.contains(current->right->number))
+                        {
+                            current = current->right;
+                            break;
+                        }
+                    }
+                    if (current->left)
+                    {
+                        if (!list.contains(current->left->number))
+                        {
+                            current = current->left;
+                            break;
+                        }
+                    }
+                }
+            }
+            list.save_queue(); //  prevents the removal of all items
+            return list.create_iterator();
+        }
+        throw out_of_range("the tree does not exist!");
+    }
+
+    MyIterator* create_bft_iterator()
+    {
+        if (head)
+        {
+            MyQueue list1, list2;
+            list1.push_back(head); // make head
+            for (size_t i = 0; i < count; i++)
+            {
+                if (list1.get_elem_tree(i)->left)
+                    list1.push_back(list1.get_elem_tree(i)->left);
+                if (list1.get_elem_tree(i)->right)
+                    list1.push_back(list1.get_elem_tree(i)->right);
+            }
+            for (size_t i = 0; i < list1.get_size(); i++)
+                list2.push_back(list1.get_elem_tree(i)->number);
+            list2.save_queue();
+            return list2.create_iterator();
+        }
+        throw out_of_range("the tree does not exist!");
     }
 private:
     size_t count = 0;
