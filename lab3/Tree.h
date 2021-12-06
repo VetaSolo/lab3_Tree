@@ -37,16 +37,16 @@ public:
     virtual bool has_next() = 0;
     virtual int next() = 0;
 };
-class MyQueue
+class List // aka queue
 {
 public:
-    MyQueue()
+    List()
     {
         size = 0;
         head = nullptr;
         last = nullptr;
     }
-    ~MyQueue()
+    ~List()
     {
         clear();
     }
@@ -54,7 +54,7 @@ public:
     {
         while (size) pop_front();
     }
-    void save_queue()
+    void save_list()
     {
         size = 0;
     }
@@ -75,8 +75,33 @@ public:
             throw out_of_range("index is entered incorrectly"); // error message
         }
     }
-    NodeTree* get_elem_tree(size_t index);
-    void pop_front();
+    NodeTree* get_elem_tree(size_t index)
+    {
+        if (size == index + 1)
+        {
+            return last->tree;
+        }
+        else if (size > index + 1)
+        {
+            Node* current = head;
+            for (size_t i = 0; i < index; i++, current = current->next); // moves the current list to index inclusive
+            return current->tree; // returns tree
+        }
+        else
+        {
+            throw out_of_range("index is entered incorrectly"); // error message
+        }
+    }
+    void pop_front()
+    {
+        if (head)
+        {
+            Node* current = head->next;
+            delete head;
+            head = current;
+            size--;
+        }
+    }
     bool contains(int number)
     {
         Node* current = head;
@@ -126,15 +151,15 @@ public:
     }
     MyIterator* create_iterator()
     {
-        return new MyListIterator(head);
+        return new My_List_Iterator(head);
     }
     
-    class MyListIterator : public MyIterator
+    class My_List_Iterator : public MyIterator
     {
     public:
-        MyListIterator(Node* start)
+        My_List_Iterator(Node* first)
         {
-            current = start;
+            current = first;
         }
         bool has_next() override
         {
@@ -169,16 +194,16 @@ public:
             remove(head->number);
         }
     }
-    bool contains(int number)
+    bool contains(int key)
     {
         NodeTree* tree = head;
         while (tree)
         {
-            if (number < tree->number)
+            if (key < tree->number)
                 tree = tree->left;
-            else if (number > tree->number)
+            else if (key > tree->number)
                 tree = tree->right;
-            else if (number == tree->number) return true;
+            else if (key == tree->number) return true;
         }
         return false;
     }
@@ -324,11 +349,11 @@ public:
     {
         if (head)
         {
-            MyQueue list;
+            List list;
             NodeTree* current = head;
             while (count > list.get_size())
             {
-                while (current->left)
+                while (current->left) // go left
                 {
                     list.push_back(current->number);
                     current = current->left;
@@ -361,7 +386,7 @@ public:
                     }
                 }
             }
-            list.save_queue(); //  prevents the removal of all items
+            list.save_list(); //  prevents the removal of all items
             return list.create_iterator();
         }
         throw out_of_range("the tree does not exist!");
@@ -371,7 +396,7 @@ public:
     {
         if (head)
         {
-            MyQueue list1, list2;
+            List list1, list2;
             list1.push_back(head); // make head
             for (size_t i = 0; i < count; i++)
             {
@@ -382,7 +407,7 @@ public:
             }
             for (size_t i = 0; i < list1.get_size(); i++)
                 list2.push_back(list1.get_elem_tree(i)->number);
-            list2.save_queue();
+            list2.save_list();
             return list2.create_iterator();
         }
         throw out_of_range("the tree does not exist!");
